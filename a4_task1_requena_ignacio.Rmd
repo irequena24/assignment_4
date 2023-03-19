@@ -2,10 +2,58 @@
 title: "Assignment 4, Task 1"
 author: "I. Requena"
 date: "2023-03-15"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, echo = TRUE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(here)
+library(sf) #simplefeatures
+library(tmap) 
+library(gstat) 
+library(stars) #spatial temporal arrays to create a grid to interpolate over
 ```
+
+
+
+
+```{r}
+### Read in the CA county data (TIGER shapefile):
+ca_counties_sf <- read_sf(here("data/ca_counties"), layer = "CA_Counties_TIGER2016") %>% 
+  janitor::clean_names() %>% 
+  select(name)
+
+#the layer= function is sometimes useful. In this case its not neccesary
+
+### Check the projection
+st_crs(ca_counties_sf) # WGS 84, epsg:3857
+
+### LOAD IN A GEOPACKAGE .gpkg. Useful bc its only one file. It wei
+
+### Read in the depth to groundwater layer: 
+ca_dgw_sf <- read_sf(here("data/ca_dgw/F2013_DBGS_Points_20150720_093252.gpkg")) %>% 
+  janitor::clean_names()
+
+### Check the projection:
+st_crs(ca_dgw_sf) # WGS 84, epsg:4326
+
+# TRANSFORM DATA
+### A. Update the groundwater data to match the counties CRS
+ca_dgw_sf <- st_transform(ca_dgw_sf, st_crs(ca_counties_sf))
+
+### B. Can also tell it the EPSG code directly if you know it
+# ca_dgw_sf <- st_transform(ca_dgw_sf, 3857)
+
+### Make a quick ggplot: 
+ggplot() +
+  geom_sf(data = ca_counties_sf) +
+  geom_sf(data = ca_dgw_sf, aes(color = dgbs))+  #distance to ground water bs
+  scale_color_gradient(low = 'pink', high= "darkred")
+  theme_minimal()
+```
+
 
